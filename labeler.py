@@ -52,13 +52,13 @@ def build(file):
     text = transcribe(file)
     new_name = ""
     if "roll" in text:
-        match = re.search(r"roll (\d|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)", text)
+        match = re.search(r"roll (\d|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)", text)
         if match:
             roll_num = match.group(1)
             if roll_num.isalpha():
                 roll_num = word_to_int.get(roll_num)
     else:
-        return 0
+        return 1
     
     new_name += "R" + str(roll_num) + "_"
     
@@ -74,13 +74,13 @@ def build(file):
     new_name += "S" + str(scene_num) + "_"
 
     if "take" in text:
-        match = re.search(r"take (\d|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)", text)
+        match = re.search(r"take (\d|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)", text)
         if match:
             take_num = match.group(1)
             if take_num.isalpha():
                 take_num = word_to_int.get(take_num)
     else:
-        return 2
+        return 1
 
     new_name += "T" + str(take_num) + ".wav"
 
@@ -90,12 +90,16 @@ def label(folder):
     for filename in os.listdir(folder):
         if filename.endswith(".wav"):
             filepath = os.path.join(folder, filename)
-            new_name = str(folder) + "/" + str(build(filepath))
-            try:
-                os.rename(str(filepath), str(new_name))
-                print(filepath + " rename success")
-            except FileNotFoundError:
-                print("File not found.")
-            except PermissionError:
-                print("Permission denied.")
-            print(new_name)
+            new_name = build(filepath)
+            if new_name == 1:
+                print("Error converting file: " + filepath)
+            else:   
+                new_name = str(folder) + "/" + new_name
+                try:
+                    os.rename(str(filepath), str(new_name))
+                    print(filepath + " rename success")
+                except FileNotFoundError:
+                    print("File not found.")
+                except PermissionError:
+                    print("Permission denied.")
+                print(new_name)
