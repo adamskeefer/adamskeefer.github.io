@@ -97,9 +97,10 @@ def label(folder):
                 new_name = str(folder) + "/" + new_name
                 try:
                     os.rename(str(filepath), str(new_name))
-                    print(filepath + " rename success")
+                    print(filepath + " renamed to " + new_name)
                 except FileNotFoundError:
                     print("File not found.")
                 except PermissionError:
                     print("Permission denied.")
-                print(new_name)
+                except FileExistsError:
+                    print("Duplicate reading: " + new_name + " already exists")
