@@ -1,8 +1,0 @@
-README.md
-setup.py
-mrfish.egg-info/PKG-INFO
-mrfish.egg-info/SOURCES.txt
-mrfish.egg-info/dependency_links.txt
-mrfish.egg-info/entry_points.txt
-mrfish.egg-info/requires.txt
-mrfish.egg-info/top_level.txt

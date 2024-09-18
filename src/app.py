@@ -2,6 +2,8 @@ import os
 import tkinter as tk
 from tkinter import filedialog
 import labeler
+global completion_label
+global folder_label
 
 def browse():
     global selected
@@ -16,6 +18,7 @@ def run():
     labeler.label(selected)
     completion_label.config(text="Files Renamed")
 
+    
 root = tk.Tk()
 root.title("Folder Selection and Run")
 
