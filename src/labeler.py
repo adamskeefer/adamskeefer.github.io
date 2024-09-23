@@ -32,26 +32,53 @@ word_to_int = d.word_to_int
 #     return temp_path
 
 
+# def transcribe(file):
+#     recognizer = sr.Recognizer()
+
+#     with sr.AudioFile(file) as source:
+#         data = recognizer.record(source)
+
+#     try: 
+#         recognizer.energy_threshold = 100
+
+#         text = recognizer.recognize_google(data)
+#         return text
+#     except sr.UnknownValueError:
+#         print("Google Speech Recognition could not understand audio")
+#     except sr.RequestError as e:
+#         print("Could not request results from Google Speech Recognition service; {0}".format(e))
+
 def transcribe(file):
     recognizer = sr.Recognizer()
+    recognizer.energy_threshold = 50
 
+    words = ""
+    return_text = ""
     with sr.AudioFile(file) as source:
-        data = recognizer.record(source)
-
-    try: 
-        recognizer.energy_threshold = 100
-
-        text = recognizer.recognize_google(data)
-        return text
-    except sr.UnknownValueError:
-        print("Google Speech Recognition could not understand audio")
-    except sr.RequestError as e:
-        print("Could not request results from Google Speech Recognition service; {0}".format(e))
-
+        flag = 0
+        for chunk in source.stream():
+            try:
+                text = recognizer.recognize_google(chunk)
+                return_text += text
+                if flag == 1:
+                    return return_text
+                if "take" in text.lower():
+                    words = text.split()
+                    take_index = words.index("take")
+                    if take_index + 1 == len(words):
+                        flag = 1
+                    else:
+                        flag = 0
+                    if flag == 0:
+                        return return_text
+            except sr.UnknownValueError:
+                continue
+            except sr.RequestError as e:
+                print("Could not request results from Google Speech Recognition service; {0}".format(e))
 def build(file):
     text = transcribe(file)
     new_name = ""
-    if "roll" in text:
+    if "roll" in text.lower():
         match = re.search(r"roll (\d|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)", text)
         if match:
             roll_num = match.group(1)
@@ -62,7 +89,7 @@ def build(file):
     
     new_name += "R" + str(roll_num) + "_"
     
-    if "scene" in text:
+    if "scene" in text.lower():
         match = re.search(r"scene (\d+[A-Z]?)", text)
         if match:
             scene_num = match.group(1)
@@ -73,7 +100,7 @@ def build(file):
 
     new_name += "S" + str(scene_num) + "_"
 
-    if "take" in text:
+    if "take" in text.lower():
         match = re.search(r"take (\d|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)", text)
         if match:
             take_num = match.group(1)
@@ -82,25 +109,50 @@ def build(file):
     else:
         return 1
 
-    new_name += "T" + str(take_num) + ".wav"
+    new_name += "T" + str(take_num)
 
     return new_name
 
+def handleDuplicate(old, new, fileset):
+    if os.path.getsize(old) == os.path.getsize(new):
+        return -1
+    if new not in fileset:
+        fileset[new] = 1
+    else:
+        current = fileset[new]
+        current += 1
+        fileset[new] = current
+        return current 
+    
 def label(folder):
+    fileset = {}
+    renamed = 0
+    total = 0
     for filename in os.listdir(folder):
         if filename.endswith(".wav"):
             filepath = os.path.join(folder, filename)
             new_name = build(filepath)
             if new_name == 1:
                 print("Error converting file: " + filepath)
+                total += 1
             else:   
                 new_name = str(folder) + "/" + new_name
                 try:
-                    os.rename(str(filepath), str(new_name))
+                    os.rename(str(filepath), str(new_name) + ".wav")
                     print(filepath + " renamed to " + new_name)
+                    renamed += 1
                 except FileNotFoundError:
                     print("File not found.")
                 except PermissionError:
                     print("Permission denied.")
                 except FileExistsError:
-                    print("Duplicate reading: " + new_name + " already exists")
+                    check = handleDuplicate(filepath, new_name, fileset)
+                    if check == -1:
+                        print("Duplicate File: " + new_name + " already exists")
+                    else:
+                        new_name = new_name + "(" + check + ")" + ".wav"
+                        os.rename(str(filepath), str(new_name))
+                        renamed += 1
+
+    print("Successfully renamed " + renamed + "/" + total + " files")
+
