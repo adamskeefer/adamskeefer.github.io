@@ -3,6 +3,7 @@ import dictionaries as d
 import re
 import os
 import wave
+import time
 
 word_to_int = d.word_to_int
 
@@ -125,6 +126,8 @@ def handleDuplicate(old, new, fileset):
         return current 
     
 def label(folder):
+    print("Running...")
+    start = time.time()
     fileset = {}
     renamed = 0
     total = 0
@@ -153,6 +156,7 @@ def label(folder):
                         new_name = new_name + "(" + check + ")" + ".wav"
                         os.rename(str(filepath), str(new_name))
                         renamed += 1
-
-    print("Successfully renamed " + renamed + "/" + total + " files")
+    end = time.time()
+    length = end - start
+    print("Successfully renamed " + renamed + "/" + total + " files in " + length + "seconds")
 
