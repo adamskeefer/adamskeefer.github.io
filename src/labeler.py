@@ -2,111 +2,79 @@ import speech_recognition as sr
 import dictionaries as d
 import re
 import os
-import wave
 import time
 
 word_to_int = d.word_to_int
+rolls = d.roll_vars
+scenes = d.scene_vars
+wordss = d.int_words
 
-
-# def find_slate(file):
-#     with wave.open(file, 'rb') as wf:
-#         params = wf.getparams()
-#         frames = wf.readframes(wf.getnframes())
-#         chunk = 1024
-#         start = 0
-#         loudest = 0
-#         while start < len(frames):
-#             end = start + chunk
-#             data = frames[start:end]
-#             for sample in data:
-#                 if abs(sample) > loudest:
-#                     loudest = abs(sample)
-#                     index = wf.tell() - len(data) + data.index(sample)
-#             start += chunk
-    
-#     temp_path = "./temp.wav"
-
-#     with wave.open(temp_path, 'wb') as new_wf:
-#         new_wf.setparams(params)
-#         data = wf.readframes(index)
-#         new_wf.writeframes(data)
-#     return temp_path
-
-
-# def transcribe(file):
-#     recognizer = sr.Recognizer()
-
-#     with sr.AudioFile(file) as source:
-#         data = recognizer.record(source)
-
-#     try: 
-#         recognizer.energy_threshold = 100
-
-#         text = recognizer.recognize_google(data)
-#         return text
-#     except sr.UnknownValueError:
-#         print("Google Speech Recognition could not understand audio")
-#     except sr.RequestError as e:
-#         print("Could not request results from Google Speech Recognition service; {0}".format(e))
 
 def transcribe(file):
     recognizer = sr.Recognizer()
-    recognizer.energy_threshold = 50
 
-    words = ""
-    return_text = ""
     with sr.AudioFile(file) as source:
-        flag = 0
-        for chunk in source.stream():
-            try:
-                text = recognizer.recognize_google(chunk)
-                return_text += text
-                if flag == 1:
-                    return return_text
-                if "take" in text.lower():
-                    words = text.split()
-                    take_index = words.index("take")
-                    if take_index + 1 == len(words):
-                        flag = 1
-                    else:
-                        flag = 0
-                    if flag == 0:
-                        return return_text
-            except sr.UnknownValueError:
-                continue
-            except sr.RequestError as e:
-                print("Could not request results from Google Speech Recognition service; {0}".format(e))
+        data = recognizer.record(source)
+
+    try: 
+        recognizer.energy_threshold = threshold
+        text = recognizer.recognize_google(data)
+        return text
+    except sr.UnknownValueError:
+        print("Google Speech Recognition could not understand audio")
+        return 1
+    except sr.RequestError as e:
+        print("Could not request results from Google Speech Recognition service; {0}".format(e))
+        return 1
+
+
 def build(file):
     text = transcribe(file)
-    new_name = ""
-    if "roll" in text.lower():
-        match = re.search(r"roll (\d|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)", text)
-        if match:
-            roll_num = match.group(1)
-            if roll_num.isalpha():
-                roll_num = word_to_int.get(roll_num)
-    else:
+    if text == 1:
         return 1
+    new_name = ""
+    if roll_value != -1:
+        roll_num = roll_value
+    else:
+        if "roll" in text.lower() or "rolled" in text.lower() or "go" in text.lower():
+            match = re.search(r"(roll|rolled|go) (\d|one|two|too|to|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)", text.lower())
+            if match:
+                roll_num = match.group(2)
+                if roll_num.isalpha():
+                    roll_num = word_to_int.get(roll_num)
+            else:
+                return 1
+        else:
+            return 1
     
     new_name += "R" + str(roll_num) + "_"
     
-    if "scene" in text.lower():
-        match = re.search(r"scene (\d+[A-Z]?)", text)
+    if "scene" in text.lower() or "seen" in text.lower():
+        match = re.search(r"(scene|seen) ((\d|one|two|too|to|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)+[A-Z]?)", text.lower())
         if match:
-            scene_num = match.group(1)
-            if len(scene_num) > 1 and scene_num[1].isdigit():
-                scene_num = scene_num[0] + chr(ord(scene_num[1]) - 17)
+            scene_num = match.group(2)
+            if scene_num.lower() in word_to_int:
+                scene_num = word_to_int.get(scene_num)
+            elif len(scene_num) > 1:
+                if scene_num[0].isalpha():
+                    scene_num[0] = word_to_int.get(scene_num[0])
+                if scene_num[1].isdigit():
+                    scene_num = scene_num[0] + chr(ord(scene_num[1]) - 17)
+        else:
+            return 1
     else:
         return 1
 
     new_name += "S" + str(scene_num) + "_"
 
     if "take" in text.lower():
-        match = re.search(r"take (\d|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)", text)
+        match = re.search(r"take (\d|one|two|too|to|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)", text.lower())
         if match:
             take_num = match.group(1)
             if take_num.isalpha():
                 take_num = word_to_int.get(take_num)
+        else:
+            return 1
     else:
         return 1
 
@@ -119,13 +87,18 @@ def handleDuplicate(old, new, fileset):
         return -1
     if new not in fileset:
         fileset[new] = 1
+        return 1
     else:
         current = fileset[new]
         current += 1
         fileset[new] = current
         return current 
     
-def label(folder):
+def label(folder, slider_value, roll_val):
+    global threshold
+    global roll_value
+    roll_value = roll_val
+    threshold = slider_value
     print("Running...")
     start = time.time()
     fileset = {}
@@ -133,11 +106,11 @@ def label(folder):
     total = 0
     for filename in os.listdir(folder):
         if filename.endswith(".wav"):
+            total += 1
             filepath = os.path.join(folder, filename)
             new_name = build(filepath)
             if new_name == 1:
                 print("Error converting file: " + filepath)
-                total += 1
             else:   
                 new_name = str(folder) + "/" + new_name
                 try:
@@ -149,14 +122,16 @@ def label(folder):
                 except PermissionError:
                     print("Permission denied.")
                 except FileExistsError:
-                    check = handleDuplicate(filepath, new_name, fileset)
+                    new_name_two = new_name + ".wav"
+                    check = handleDuplicate(filepath, new_name_two, fileset)
                     if check == -1:
                         print("Duplicate File: " + new_name + " already exists")
                     else:
-                        new_name = new_name + "(" + check + ")" + ".wav"
+                        new_name = new_name + "(" + str(check) + ")" + ".wav"
                         os.rename(str(filepath), str(new_name))
                         renamed += 1
+                        print(filepath + " renamed to " + new_name)
     end = time.time()
     length = end - start
-    print("Successfully renamed " + renamed + "/" + total + " files in " + length + "seconds")
+    print("Successfully renamed " + str(renamed) + "/" + str(total) + " files in " + str(length) + " seconds")
 

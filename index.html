@@ -8,9 +8,11 @@
     </head>
     <body>
         <h1>Mr Fish File Manager</h1>
-        <a href="dist/fish.exe" download>Windows Download</a>
+        <a href="dist/fishwin.exe" download>Windows Download</a>
         <h2>Instructions</h2>
         <p>Run the executable file and select a folder from your system containing .wav files. Mr Fish reads files slated as follows: "Roll [Number] Scene [Number and optional character] Take [number]"<br>For example, "Roll 2 scene 4A take 3" is in the valid format. Files are renamed within the folder you select, no files are duplicated or deleted.</p>
+        <p>Threshold will determine the level of sound recorded. The recommended value is 50, but raise if the person on slate was loud, or lower if the person on slate was quiet.</p>
+        <p>The Roll field is optional. Fill this field in if all the files in the folder are the same roll and/or the person reading slate did not read the roll. The latter is the more useful application of this feature.</p>
         <div class="footer">
             <p>Source code  <a href="https://github.com/adamskeefer/audio-labeler" target="_blank">here</a></p>
         </div>
