@@ -25,7 +25,7 @@ def run():
 
   
 root = tk.Tk()
-root.title("Folder Selection and Run")
+root.title("Mr. Fish File Manager")
 
 folder_label = tk.Label(root, text="No folder selected")
 folder_label.pack()

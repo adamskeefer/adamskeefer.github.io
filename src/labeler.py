@@ -3,13 +3,13 @@ import dictionaries as d
 import re
 import os
 import time
+import logging
 
 word_to_int = d.word_to_int
 words_to_char = d.words_to_char
 rolls = d.roll_vars
 scenes = d.scene_vars
 wordss = d.int_words
-
 
 def transcribe(file):
     recognizer = sr.Recognizer()
@@ -22,6 +22,7 @@ def transcribe(file):
         text = recognizer.recognize_google(data)
         return text
     except sr.UnknownValueError:
+        logging.error(file + ': Google Speech Recognition issue')
         print("Google Speech Recognition could not understand audio")
         return 1
     except sr.RequestError as e:
@@ -44,8 +45,12 @@ def build(file):
                 if roll_num.isalpha():
                     roll_num = word_to_int.get(roll_num)
             else:
+                logging.error(file + ': could not generate roll, see transcript below')
+                logging.info(text + '\n')
                 return 1
         else:
+            logging.error(file + ': could not find word [roll], see transcript below')
+            logging.info(text + '\n')
             return 1
     
     new_name += "R" + str(roll_num) + "_"
@@ -72,8 +77,12 @@ def build(file):
                 elif components[1].isalpha():
                     scene_num = scene_num + str(components[1].upper())
         else:
+            logging.error(file + ': could not generate scene, see transcript below')
+            logging.info(text + '\n')
             return 1
     else:
+        logging.error(file + ': could not find word [scene], see transcript below')
+        logging.info(text + '\n')
         return 1
 
     new_name += "S" + scene_num + "_"
@@ -85,12 +94,17 @@ def build(file):
             if take_num.isalpha():
                 take_num = word_to_int.get(take_num)
         else:
+            logging.error(file + ': could not generate take, see transcript below')
+            logging.info(text + '\n')
             return 1
     else:
+        logging.error(file + ': could not find word [take], see transcript below')
+        logging.info(text + '\n')
         return 1
 
     new_name += "T" + str(take_num)
 
+    logging.info(file + ': SUCCESS')
     return new_name
 
 def handleDuplicate(old, new, fileset):
@@ -115,6 +129,11 @@ def label(folder, slider_value, roll_val):
     fileset = {}
     renamed = 0
     total = 0
+    logging.basicConfig(
+        filename=folder+'/fishy',
+        level=logging.DEBUG,
+        format='%(asctime)s %(levelname)s %(message)s'
+    )
     for filename in os.listdir(folder):
         if filename.endswith(".wav"):
             total += 1
