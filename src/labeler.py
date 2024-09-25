@@ -5,6 +5,7 @@ import os
 import time
 
 word_to_int = d.word_to_int
+words_to_char = d.words_to_char
 rolls = d.roll_vars
 scenes = d.scene_vars
 wordss = d.int_words
@@ -50,22 +51,32 @@ def build(file):
     new_name += "R" + str(roll_num) + "_"
     
     if "scene" in text.lower() or "seen" in text.lower():
-        match = re.search(r"(scene|seen) ((\d|one|two|too|to|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)+[A-Z]?)", text.lower())
+        match = re.search(r"(scene|seen) ((\d|one|two|too|to|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\s*(take|see|sea|be|bee|gee|pee|pea|are|tee|tea|ex|why)*[a-z]?)", text.lower())
         if match:
             scene_num = match.group(2)
-            if scene_num.lower() in word_to_int:
-                scene_num = word_to_int.get(scene_num)
-            elif len(scene_num) > 1:
-                if scene_num[0].isalpha():
-                    scene_num[0] = word_to_int.get(scene_num[0])
-                if scene_num[1].isdigit():
-                    scene_num = scene_num[0] + chr(ord(scene_num[1]) - 17)
+            components = scene_num.split()
+            if len(components) > 1 and components[1].lower() == "take":
+                del components[1]
+            if len(components) == 1:
+                if components[0].lower() in word_to_int:
+                    scene_num = str(word_to_int.get(components[0]))
+                else:
+                    scene_num = str(components[0].upper())
+            else:
+                if components[0].lower() in word_to_int:
+                    scene_num = str(word_to_int.get(components[0]))
+                else:
+                    scene_num = components[0]
+                if components[1].lower() in words_to_char:
+                    scene_num = scene_num + str(words_to_char.get(components[1]).upper())
+                elif components[1].isalpha():
+                    scene_num = scene_num + str(components[1].upper())
         else:
             return 1
     else:
         return 1
 
-    new_name += "S" + str(scene_num) + "_"
+    new_name += "S" + scene_num + "_"
 
     if "take" in text.lower():
         match = re.search(r"take (\d|one|two|too|to|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)", text.lower())

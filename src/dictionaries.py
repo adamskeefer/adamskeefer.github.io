@@ -5,4 +5,5 @@ roll_vars = ['roll', 'rolled', 'go']
 
 scene_vars = ['scene', 'seen']
 
+words_to_char = {"see": 'c', "sea": 'c', "be": 'b', "gee": 'g', "pee": 'p', "pea": 'p', "are": 'r', "tea": 't', "ex": 'x', "why": 'y'}
 int_words = list(word_to_int.keys())
